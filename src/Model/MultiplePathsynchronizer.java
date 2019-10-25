@@ -36,9 +36,10 @@ public class MultiplePathsynchronizer extends Thread {
     public synchronized void run() {
 
         for (Map.Entry<String, String> file : synchronizedPaths.entrySet()) {
-
             String source = file.getKey();
             String destination = file.getValue();
+            
+            System.out.println(source+"  "+destination);
 
             FileSynchronizer backingUp = new FileSynchronizer(source, destination, stop, progressBar, messageLabel);
             backingUp.start();

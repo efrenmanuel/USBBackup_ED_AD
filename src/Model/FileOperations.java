@@ -113,6 +113,7 @@ public class FileOperations {
 
     public static boolean copyFile(File input, File output, boolean force) throws IOException {
         boolean result;
+        if (!input.isDirectory()){
         if (!output.exists()){
             Files.createDirectories(output.toPath().getParent());
         }
@@ -125,7 +126,12 @@ public class FileOperations {
             result = true;
         } catch (FileAlreadyExistsException ex) {
             result = false;
+        }}else{
+            Files.createDirectories(output.toPath());
+            result = true;
+            
         }
+        
         return result;
 
     }
