@@ -38,10 +38,10 @@ public class CustomExceptions extends Exception {
 
     }
 
-    public static class NoExisteElDirectorio extends CustomExceptions {
+    public static class TheDirectoryDoesntExists extends CustomExceptions {
 
-        public NoExisteElDirectorio(String dir) {
-            super("El directorio no existe: " + dir);
+        public TheDirectoryDoesntExists(String dir) {
+            super("The directory doesn't exist: " + dir);
         }
 
     }

@@ -20,13 +20,13 @@ import javax.swing.JProgressBar;
  */
 public class MultiplePathsynchronizer extends Thread {
 
-    HashMap<String, String> synchronizedPaths;
+    HashMap<File, File> synchronizedPaths;
     boolean stop = false;
     JProgressBar progressBar;
     
     JLabel messageLabel;
 
-    public MultiplePathsynchronizer(HashMap<String, String> synchronizedPaths, JProgressBar progressBar,JLabel messageLabel) {
+    public MultiplePathsynchronizer(HashMap<File, File> synchronizedPaths, JProgressBar progressBar,JLabel messageLabel) {
         this.synchronizedPaths = synchronizedPaths;
         this.progressBar = progressBar;
         this.messageLabel=messageLabel;
@@ -35,9 +35,9 @@ public class MultiplePathsynchronizer extends Thread {
     @Override
     public synchronized void run() {
 
-        for (Map.Entry<String, String> file : synchronizedPaths.entrySet()) {
-            String source = file.getKey();
-            String destination = file.getValue();
+        for (Map.Entry<File, File> file : synchronizedPaths.entrySet()) {
+            File source = file.getKey();
+            File destination = file.getValue();
             
             System.out.println(source+"  "+destination);
 

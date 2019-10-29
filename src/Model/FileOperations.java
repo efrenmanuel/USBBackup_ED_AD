@@ -7,12 +7,11 @@ package Model;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  *
@@ -65,7 +64,7 @@ public class FileOperations {
      * @throws CustomExceptions
      * @throws IOException
      */
-    public static ArrayList<File> recursiveListFiles(File searchRoot) throws CustomExceptions, IOException {
+    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders) throws CustomExceptions, IOException {
         ArrayList<File> results = new ArrayList<>();
 
         if (!searchRoot.isDirectory()) {
@@ -76,15 +75,24 @@ public class FileOperations {
         if (content != null) {
             for (File file : content) {
                 if (!file.isDirectory()) {
+
                     results.add(file);
+
                 } else {
-                    results.add(file);
-                    results.addAll(recursiveListFiles(file.getCanonicalPath()));
+                    if (includeFolders) {
+                        results.add(file);
+
+                    }
+                    results.addAll(recursiveListFiles(file, includeFolders));
                 }
             }
 
         }
         return results;
+    }
+
+    public static ArrayList<File> recursiveListFiles(File searchRoot) throws CustomExceptions, IOException {
+        return recursiveListFiles(searchRoot, true);
     }
 
     public static boolean copyFileIfNewer(File input, String output) throws IOException {
@@ -113,25 +121,26 @@ public class FileOperations {
 
     public static boolean copyFile(File input, File output, boolean force) throws IOException {
         boolean result;
-        if (!input.isDirectory()){
-        if (!output.exists()){
-            Files.createDirectories(output.toPath().getParent());
-        }
-        try {
-            if (force) {
-                Files.copy(input.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                Files.copy(input.toPath(), output.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+        if (!input.isDirectory()) {
+            if (!output.exists()) {
+                Files.createDirectories(output.toPath().getParent());
             }
-            result = true;
-        } catch (FileAlreadyExistsException ex) {
-            result = false;
-        }}else{
+            try {
+                if (force) {
+                    Files.copy(input.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } else {
+                    Files.copy(input.toPath(), output.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+                }
+                result = true;
+            } catch (FileAlreadyExistsException ex) {
+                result = false;
+            }
+        } else {
             Files.createDirectories(output.toPath());
             result = true;
-            
+
         }
-        
+
         return result;
 
     }
@@ -150,4 +159,133 @@ public class FileOperations {
         return recursiveListFiles(searchRoot);
     }
 
+    public static ArrayList<File> findDuplicates(String root) throws IOException, CustomExceptions {
+        return findDuplicates(root, null);
+    }
+
+    public static ArrayList<File> findDuplicates(File root) throws IOException, CustomExceptions {
+        return findDuplicates(root, null);
+    }
+
+    public static ArrayList<File> findDuplicates(String root, File original) throws IOException, CustomExceptions {
+        return findDuplicates(new File(root), original);
+    }
+
+    /*public static ArrayList<File> findDuplicates(File root, File original) throws IOException, CustomExceptions {
+
+        if (!root.isDirectory()) {
+            throw new CustomExceptions.TheDirectoryDoesntExists(root.getCanonicalPath());
+        }
+
+        if (original == null) {
+
+            ArrayList<File> seen = new ArrayList<>();
+            ArrayList<File> duplicated = new ArrayList<>();
+
+            for (File file : recursiveListFiles(root)) {
+                for (File seenFile : seen) {
+                    if (compareFiles(file, seenFile)) {
+
+                        duplicated.add(file);
+
+                        if (!duplicated.contains(seenFile)) {
+                            duplicated.add(seenFile);
+                        }
+
+                    } else {
+                        seen.add(file);
+                    }
+                }
+            }
+            return duplicated;
+        } else {
+            if (original.isDirectory()) {
+                throw new CustomExceptions.ItsADirectory(root.getCanonicalPath());
+            }
+            ArrayList<File> duplicated = new ArrayList<>();
+
+            for (File file : recursiveListFiles(root)) {
+                if (compareFiles(file, original)) {
+
+                    duplicated.add(file);
+
+                }
+            }
+            return duplicated;
+        }
+
+    }*/
+    public static ArrayList<File> findDuplicates(File root, File original) throws IOException, CustomExceptions {
+
+        if (!root.isDirectory()) {
+            throw new CustomExceptions.TheDirectoryDoesntExists(root.getCanonicalPath());
+        }
+
+        ArrayList<File> allFiles = recursiveListFiles(root, false);
+        //System.out.println(allFiles.size());
+        allFiles.sort(new Comparator() {
+            @Override
+            public int compare(Object filein1, Object filein2) {
+                File file1 = (File) filein1;
+                File file2 = (File) filein2;
+
+                switch (Long.compare(file1.length(), file2.length())) {
+                    case 0:
+                        if (file1.getName().equals(file2.getName())) {
+                            return 0;
+                        } else {
+                            return file1.getName().compareTo(file2.getName());
+                        }
+                    default:
+                        return file1.getName().compareTo(file2.getName());
+
+                }
+
+            }
+        });
+
+        ArrayList<File> duplicated = new ArrayList<>();
+        if (original == null) {
+
+            for (int file = 0; file < allFiles.size(); file++) {
+                int comparingWith = file + 1;
+                while (comparingWith < allFiles.size() && allFiles.get(comparingWith).length() == allFiles.get(file).length()) {
+                    if (!duplicated.contains(allFiles.get(file))) {
+                        duplicated.add(allFiles.get(file));
+                    }
+
+                    duplicated.add(allFiles.get(comparingWith));
+                    file++;
+                    comparingWith++;
+                }
+            }
+            return duplicated;
+        } else {
+            if (original.isDirectory()) {
+                throw new CustomExceptions.ItsADirectory(root.getCanonicalPath());
+            }
+
+            for (File file : recursiveListFiles(root)) {
+                if (compareFiles(file, original)) {
+
+                    duplicated.add(file);
+
+                }
+            }
+            return duplicated;
+        }
+
+    }
+
+    public static boolean compareFiles(File file1, File file2) {
+        return (file1.getName().equals(file2.getName()) && file1.length() == file2.length());
+    }
+
+    public static long getFreeSpace(String root) {
+        return getFreeSpace(new File(root));
+    }
+
+    public static long getFreeSpace(File root) {
+        return root.getFreeSpace();
+    }
 }

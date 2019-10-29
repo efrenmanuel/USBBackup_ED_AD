@@ -19,13 +19,13 @@ import javax.swing.JProgressBar;
  */
 public class FileSynchronizer extends Thread {
 
-    private String localSource;
-    private String backupRoute;
+    private File localSource;
+    private File backupRoute;
     private boolean stop;
     private JProgressBar progressBar;
     private JLabel messageLabel;
 
-    public FileSynchronizer(String localSource, String backupRoute, boolean stop, JProgressBar progressBar, JLabel messageLabel) {
+    public FileSynchronizer(File localSource, File backupRoute, boolean stop, JProgressBar progressBar, JLabel messageLabel) {
         this.localSource = localSource;
         this.backupRoute = backupRoute;
         this.stop = stop;
@@ -36,10 +36,8 @@ public class FileSynchronizer extends Thread {
     @Override
     public void run() {
         try {
-            File source = new File(localSource);
-            File destination = new File(backupRoute);
 
-            ArrayList<File> allFiles = FileOperations.recursiveListFiles(source);
+            ArrayList<File> allFiles = FileOperations.recursiveListFiles(localSource);
 
             progressBar.setMinimum(0);
 
@@ -52,9 +50,9 @@ public class FileSynchronizer extends Thread {
             progressBar.setMaximum((int) totalFileSize);
 
             for (File file : allFiles) {
-                messageLabel.setText("Synchronizing - " + file.getName());
+                messageLabel.setText("Synchronizing - " + ((file.getCanonicalPath().length() > 50) ? ("..."+(file.getCanonicalPath().substring(file.getCanonicalPath().length()-50))):file.getCanonicalPath()));
                 //System.out.println(backupRoute + file.getCanonicalPath().replace(localSource, ""));
-                FileOperations.copyFileIfNewer(file, backupRoute + file.getCanonicalPath().replace(localSource, ""));
+                FileOperations.copyFileIfNewer(file, backupRoute.getCanonicalPath() + file.getCanonicalPath().replace(localSource.getCanonicalPath(), ""));
                 if (stop) {
                     break;
                 }
@@ -62,8 +60,10 @@ public class FileSynchronizer extends Thread {
                 progressBar.setValue(progressBar.getValue()+(int) file.length());
             }
             messageLabel.setText("Finished synchronizing - " + localSource);
-        } catch (CustomExceptions | IOException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(MultiplePathsynchronizer.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (CustomExceptions ex) {
+            Logger.getLogger(FileSynchronizer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

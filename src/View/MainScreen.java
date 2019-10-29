@@ -7,6 +7,7 @@ package View;
 
 import Model.CustomExceptions;
 import Model.FileOperations;
+import Model.Initialization;
 import Model.MultiplePathsynchronizer;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import mdlaf.*;
+import mdlaf.animation.*;
+import mdlaf.utils.MaterialColors;
+import mdlaf.animation.MaterialUIMovement;
+
 /**
  *
  * @author alumno
@@ -24,8 +30,8 @@ import java.util.logging.Logger;
 public class MainScreen extends javax.swing.JFrame {
 
     private String RootLocation;
-    private HashMap<String, String> synchronizedPaths = new HashMap<>();
-    MultiplePathsynchronizer fileSynchronizer;
+    private HashMap<File, File> synchronizedPaths = new HashMap<>();
+    private MultiplePathsynchronizer fileSynchronizer;
 
     /**
      * Creates new form MainScreen
@@ -36,19 +42,16 @@ public class MainScreen extends javax.swing.JFrame {
         String pathPair;
 
         while ((pathPair = synchronizedPathsFile.readLine()) != null) {
-            String translated=new String(pathPair.getBytes("ISO-8859-1"), "UTF-8");
-            synchronizedPaths.put(translated.split(",")[0], translated.split(",")[1]);
+            String translated = new String(pathPair.getBytes("ISO-8859-1"), "UTF-8");
+            synchronizedPaths.put(new File(translated.split(",")[0]), new File(translated.split(",")[1]));
         }
-
-        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel);
-        fileSynchronizer.start();
         
-        for (File file: new File("/media/alumno").listFiles()){
-            System.out.println(file);
-        }
+        Initialization.initialize(jTable1, synchronizedPaths);
+        
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel);
+        //fileSynchronizer.start();
 
         //System.out.println(FileOperations.recursiveListFiles(synchronizedPaths.keySet().toArray()[0].toString()));
-
     }
 
     /**
@@ -63,6 +66,9 @@ public class MainScreen extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         progressBarMainScreen = new javax.swing.JProgressBar();
         messageLabel = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -71,7 +77,32 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        messageLabel.setText("Backing up C:\\Users\\Efren\\Documents");
+        messageLabel.setText("Insert Description of Current Task here");
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Source", "Last modified", "Backup", "Last modified"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(jTable1);
+        if (jTable1.getColumnModel().getColumnCount() > 0) {
+            jTable1.getColumnModel().getColumn(1).setResizable(false);
+            jTable1.getColumnModel().getColumn(3).setResizable(false);
+        }
+
+        jButton2.setText("Backup directory");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -82,22 +113,32 @@ public class MainScreen extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(messageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 558, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 825, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(messageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(405, Short.MAX_VALUE)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(messageLabel))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(messageLabel)
+                    .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(12, 12, 12))
         );
+
+        jButton2.setBackground(MaterialColors.GREEN_200);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -122,25 +163,21 @@ public class MainScreen extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            javax.swing.UIManager.setLookAndFeel(new MaterialLookAndFeel());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(MainScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 try {
                     new MainScreen().setVisible(true);
-                } catch (IOException ex) {
-                    Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (CustomExceptions ex) {
+                } catch (IOException | CustomExceptions ex) {
                     Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -149,7 +186,10 @@ public class MainScreen extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JTable jTable1;
     private javax.swing.JLabel messageLabel;
     private javax.swing.JProgressBar progressBarMainScreen;
     // End of variables declaration//GEN-END:variables
