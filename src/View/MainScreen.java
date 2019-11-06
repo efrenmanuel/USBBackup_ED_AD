@@ -7,8 +7,9 @@ package View;
 
 import Model.CustomExceptions;
 import Model.FileOperations;
-import Model.Initialization;
+import Model.InitializeTable;
 import Model.MultiplePathsynchronizer;
+import Model.SettingsFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -17,6 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 import mdlaf.*;
 import mdlaf.animation.*;
@@ -30,7 +34,7 @@ import mdlaf.animation.MaterialUIMovement;
 public class MainScreen extends javax.swing.JFrame {
 
     private String RootLocation;
-    private HashMap<File, File> synchronizedPaths = new HashMap<>();
+    private HashMap<File, ArrayList<Object>> synchronizedPaths = new HashMap<>();
     private MultiplePathsynchronizer fileSynchronizer;
 
     /**
@@ -38,20 +42,14 @@ public class MainScreen extends javax.swing.JFrame {
      */
     public MainScreen() throws IOException, CustomExceptions {
         initComponents();
-        RandomAccessFile synchronizedPathsFile = new RandomAccessFile("./enabledPaths.cfg", "r");
         String pathPair;
-
-        while ((pathPair = synchronizedPathsFile.readLine()) != null) {
-            String translated = new String(pathPair.getBytes("ISO-8859-1"), "UTF-8");
-            synchronizedPaths.put(new File(translated.split(",")[0]), new File(translated.split(",")[1]));
+        synchronizedPaths = SettingsFile.getSyncedPaths();
+        for (Map.Entry<File, ArrayList<Object>> entry : synchronizedPaths.entrySet()) {
         }
-        
-        Initialization.initialize(jTable1, synchronizedPaths);
-        
-        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel);
-        //fileSynchronizer.start();
 
-        //System.out.println(FileOperations.recursiveListFiles(synchronizedPaths.keySet().toArray()[0].toString()));
+        InitializeTable.initialize(jTable1, synchronizedPaths);
+
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel, stopper);
     }
 
     /**
@@ -68,9 +66,14 @@ public class MainScreen extends javax.swing.JFrame {
         messageLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
-        jButton2 = new javax.swing.JButton();
+        newBackupButton = new javax.swing.JButton();
+        startBackup = new javax.swing.JButton();
+        stopper = new javax.swing.JButton();
+        removeDir = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(500, 475));
+        setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
@@ -84,25 +87,96 @@ public class MainScreen extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Source", "Last modified", "Backup", "Last modified"
+                "Source", "Last modified", "Backup", "Last modified", "Backup", "Clasify", "Delete Origin"
             }
         ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class
             };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, true, true, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jTable1.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(jTable1);
         if (jTable1.getColumnModel().getColumnCount() > 0) {
             jTable1.getColumnModel().getColumn(1).setResizable(false);
             jTable1.getColumnModel().getColumn(3).setResizable(false);
+            jTable1.getColumnModel().getColumn(4).setResizable(false);
+            jTable1.getColumnModel().getColumn(5).setResizable(false);
         }
 
-        jButton2.setText("Backup directory");
+        newBackupButton.setText("Add backup directory");
+        newBackupButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                newBackupButtonMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                newBackupButtonMouseReleased(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                newBackupButtonMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                newBackupButtonMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                newBackupButtonMouseEntered(evt);
+            }
+        });
+        newBackupButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newBackupButtonActionPerformed(evt);
+            }
+        });
+
+        startBackup.setText("Start Backup");
+        startBackup.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                startBackupMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                startBackupMouseReleased(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                startBackupMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                startBackupMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                startBackupMouseEntered(evt);
+            }
+        });
+        startBackup.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                startBackupActionPerformed(evt);
+            }
+        });
+
+        stopper.setText("Stop backup");
+        stopper.setEnabled(false);
+        stopper.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopperActionPerformed(evt);
+            }
+        });
+
+        removeDir.setText("Remove backup directory");
+        removeDir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeDirActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -111,15 +185,23 @@ public class MainScreen extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 825, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(messageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 810, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(newBackupButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(startBackup, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(removeDir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(stopper))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(jSeparator1)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -128,24 +210,132 @@ public class MainScreen extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(newBackupButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(removeDir)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(startBackup)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(stopper)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(messageLabel)
                     .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(12, 12, 12))
         );
 
-        jButton2.setBackground(MaterialColors.GREEN_200);
+        newBackupButton.setBackground(MaterialColors.GREEN_200);
+        newBackupButton.setBackground(MaterialColors.GREEN_200);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        fileSynchronizer.setStop(true);
+        if (fileSynchronizer != null && fileSynchronizer.isAlive()) {
+            fileSynchronizer.setStop(true);
+        }
+        try {
+            SettingsFile.overwriteSettings(synchronizedPaths);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+
     }//GEN-LAST:event_formWindowClosing
+
+    private void newBackupButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newBackupButtonMouseEntered
+        newBackupButton.setBackground(MaterialColors.GREEN_100);
+    }//GEN-LAST:event_newBackupButtonMouseEntered
+
+    private void newBackupButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newBackupButtonMouseExited
+        newBackupButton.setBackground(MaterialColors.GREEN_200);
+    }//GEN-LAST:event_newBackupButtonMouseExited
+
+    private void newBackupButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newBackupButtonMousePressed
+        newBackupButton.setBackground(MaterialColors.GREEN_300);
+    }//GEN-LAST:event_newBackupButtonMousePressed
+
+    private void newBackupButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newBackupButtonMouseReleased
+        newBackupButton.setBackground(MaterialColors.GREEN_100);
+    }//GEN-LAST:event_newBackupButtonMouseReleased
+
+    private void newBackupButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newBackupButtonMouseClicked
+        newBackupButton.setBackground(MaterialColors.GREEN_100);
+    }//GEN-LAST:event_newBackupButtonMouseClicked
+
+    private void newBackupButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newBackupButtonActionPerformed
+        NewDirectoryBUForm directoryForm;
+
+        try {
+            directoryForm = new NewDirectoryBUForm(this, true);
+            Map<File, ArrayList<Object>> toAdd = directoryForm.showDialog();
+            if (toAdd != null && toAdd.size() > 0) {
+                if (!synchronizedPaths.containsKey((File) toAdd.keySet().toArray()[0])) {
+                    synchronizedPaths.putAll(toAdd);
+                    InitializeTable.update(jTable1, synchronizedPaths);
+                    SettingsFile.addNewPaths((HashMap<File, ArrayList<Object>>) toAdd);
+                }
+            }
+
+        } catch (IOException ex) {
+            Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_newBackupButtonActionPerformed
+
+    private void startBackupMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startBackupMouseClicked
+        startBackup.setBackground(MaterialColors.GRAY_100);
+    }//GEN-LAST:event_startBackupMouseClicked
+
+    private void startBackupMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startBackupMouseEntered
+        startBackup.setBackground(MaterialColors.GRAY_100);
+    }//GEN-LAST:event_startBackupMouseEntered
+
+    private void startBackupMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startBackupMouseExited
+        startBackup.setBackground(MaterialColors.GRAY_200);
+    }//GEN-LAST:event_startBackupMouseExited
+
+    private void startBackupMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startBackupMousePressed
+        startBackup.setBackground(MaterialColors.GRAY_300);
+    }//GEN-LAST:event_startBackupMousePressed
+
+    private void startBackupMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startBackupMouseReleased
+        startBackup.setBackground(MaterialColors.GRAY_100);
+    }//GEN-LAST:event_startBackupMouseReleased
+
+    private void startBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startBackupActionPerformed
+        stopper.setEnabled(true);
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel, stopper);
+        fileSynchronizer.start();
+        try {
+            SettingsFile.overwriteSettings(synchronizedPaths);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+
+
+    }//GEN-LAST:event_startBackupActionPerformed
+
+    private void stopperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopperActionPerformed
+        fileSynchronizer.setStop(true);
+    }//GEN-LAST:event_stopperActionPerformed
+
+    private void removeDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeDirActionPerformed
+        if (jTable1.getSelectedRow() != -1) {
+            synchronizedPaths.remove(new File((String) jTable1.getValueAt(jTable1.getSelectedRow(), 0)));
+            ((DefaultTableModel) jTable1.getModel()).removeRow(jTable1.getSelectedRow());
+            try {
+                SettingsFile.overwriteSettings(synchronizedPaths);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
+            }
+        }else{
+            System.out.println(jTable1.getRowCount());
+        }
+
+    }//GEN-LAST:event_removeDirActionPerformed
 
     /**
      * @param args the command line arguments
@@ -166,9 +356,10 @@ public class MainScreen extends javax.swing.JFrame {
             javax.swing.UIManager.setLookAndFeel(new MaterialLookAndFeel());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(MainScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         }
         //</editor-fold>
-        
+
         //</editor-fold>
 
         /* Create and display the form */
@@ -186,11 +377,14 @@ public class MainScreen extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel messageLabel;
+    private javax.swing.JButton newBackupButton;
     private javax.swing.JProgressBar progressBarMainScreen;
+    private javax.swing.JButton removeDir;
+    private javax.swing.JButton startBackup;
+    private javax.swing.JButton stopper;
     // End of variables declaration//GEN-END:variables
 }

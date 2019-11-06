@@ -127,7 +127,7 @@ public class FileOperations {
             }
             try {
                 if (force) {
-                    Files.copy(input.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(input.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
                 } else {
                     Files.copy(input.toPath(), output.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
                 }
@@ -171,50 +171,7 @@ public class FileOperations {
         return findDuplicates(new File(root), original);
     }
 
-    /*public static ArrayList<File> findDuplicates(File root, File original) throws IOException, CustomExceptions {
-
-        if (!root.isDirectory()) {
-            throw new CustomExceptions.TheDirectoryDoesntExists(root.getCanonicalPath());
-        }
-
-        if (original == null) {
-
-            ArrayList<File> seen = new ArrayList<>();
-            ArrayList<File> duplicated = new ArrayList<>();
-
-            for (File file : recursiveListFiles(root)) {
-                for (File seenFile : seen) {
-                    if (compareFiles(file, seenFile)) {
-
-                        duplicated.add(file);
-
-                        if (!duplicated.contains(seenFile)) {
-                            duplicated.add(seenFile);
-                        }
-
-                    } else {
-                        seen.add(file);
-                    }
-                }
-            }
-            return duplicated;
-        } else {
-            if (original.isDirectory()) {
-                throw new CustomExceptions.ItsADirectory(root.getCanonicalPath());
-            }
-            ArrayList<File> duplicated = new ArrayList<>();
-
-            for (File file : recursiveListFiles(root)) {
-                if (compareFiles(file, original)) {
-
-                    duplicated.add(file);
-
-                }
-            }
-            return duplicated;
-        }
-
-    }*/
+    
     public static ArrayList<File> findDuplicates(File root, File original) throws IOException, CustomExceptions {
 
         if (!root.isDirectory()) {
@@ -222,7 +179,6 @@ public class FileOperations {
         }
 
         ArrayList<File> allFiles = recursiveListFiles(root, false);
-        //System.out.println(allFiles.size());
         allFiles.sort(new Comparator() {
             @Override
             public int compare(Object filein1, Object filein2) {
