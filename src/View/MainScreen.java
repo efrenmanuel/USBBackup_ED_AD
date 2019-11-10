@@ -11,6 +11,7 @@ import Model.InitializeTable;
 import Model.MultiplePathsynchronizer;
 import Model.SettingsFile;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class MainScreen extends javax.swing.JFrame {
     private String RootLocation;
     private HashMap<File, ArrayList<Object>> synchronizedPaths = new HashMap<>();
     private MultiplePathsynchronizer fileSynchronizer;
+    HashMap<String, FileFilter> filters;
 
     /**
      * Creates new form MainScreen
@@ -48,8 +50,7 @@ public class MainScreen extends javax.swing.JFrame {
         }
 
         InitializeTable.initialize(jTable1, synchronizedPaths);
-
-        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel, stopper);
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, filters, messageLabel, stopper);
     }
 
     /**
@@ -307,7 +308,7 @@ public class MainScreen extends javax.swing.JFrame {
 
     private void startBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startBackupActionPerformed
         stopper.setEnabled(true);
-        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, messageLabel, stopper);
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, filters,messageLabel, stopper);
         fileSynchronizer.start();
         try {
             SettingsFile.overwriteSettings(synchronizedPaths);
@@ -331,11 +332,19 @@ public class MainScreen extends javax.swing.JFrame {
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
             }
-        }else{
+        } else {
             System.out.println(jTable1.getRowCount());
         }
 
     }//GEN-LAST:event_removeDirActionPerformed
+
+    private void updateBottomBar(String text, int min, int max, int val) {
+        progressBarMainScreen.setMinimum(min);
+        progressBarMainScreen.setMaximum(max);
+        progressBarMainScreen.setValue(val);
+        messageLabel.setText(text);
+
+    }
 
     /**
      * @param args the command line arguments
@@ -373,6 +382,7 @@ public class MainScreen extends javax.swing.JFrame {
                 }
             }
         });
+
     }
 
 

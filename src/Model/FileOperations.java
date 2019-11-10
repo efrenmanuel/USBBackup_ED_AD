@@ -6,12 +6,14 @@
 package Model;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 
 /**
  *
@@ -60,17 +62,19 @@ public class FileOperations {
      * Returns an array of files in the directory
      *
      * @param searchRoot Root of the directory we are searching in.
+     * @param includeFolders
+     * @param filter
      * @return Array of files that are named like so.
      * @throws CustomExceptions
      * @throws IOException
      */
-    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders) throws CustomExceptions, IOException {
+    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders, FileFilter filter) throws CustomExceptions, IOException {
         ArrayList<File> results = new ArrayList<>();
 
         if (!searchRoot.isDirectory()) {
             throw new CustomExceptions.NotADirectory(searchRoot.getCanonicalPath());
         }
-        File[] content = searchRoot.listFiles();
+        File[] content = searchRoot.listFiles(filter);
 
         if (content != null) {
             for (File file : content) {
@@ -92,7 +96,15 @@ public class FileOperations {
     }
 
     public static ArrayList<File> recursiveListFiles(File searchRoot) throws CustomExceptions, IOException {
-        return recursiveListFiles(searchRoot, true);
+        return recursiveListFiles(searchRoot, true, null);
+    }
+
+    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders) throws CustomExceptions, IOException {
+        return recursiveListFiles(searchRoot, includeFolders, null);
+    }
+
+    public static ArrayList<File> recursiveListFiles(File searchRoot, FileFilter filter) throws CustomExceptions, IOException {
+        return recursiveListFiles(searchRoot, true, filter);
     }
 
     public static boolean copyFileIfNewer(File input, String output) throws IOException {
@@ -171,7 +183,6 @@ public class FileOperations {
         return findDuplicates(new File(root), original);
     }
 
-    
     public static ArrayList<File> findDuplicates(File root, File original) throws IOException, CustomExceptions {
 
         if (!root.isDirectory()) {

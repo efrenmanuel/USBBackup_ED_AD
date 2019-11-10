@@ -6,6 +6,7 @@
 package Model;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -22,18 +24,20 @@ import javax.swing.JProgressBar;
  */
 public class MultiplePathsynchronizer extends Thread {
 
-    HashMap<File, ArrayList<Object>> synchronizedPaths;
-    boolean stop = false;
-    JProgressBar progressBar;
-    JButton stopper;
-    JLabel messageLabel;
-    FileSynchronizer backingUp = null;
+    private final HashMap<File, ArrayList<Object>> synchronizedPaths;
+    private HashMap<String, FileFilter> filters;
+    private boolean stop = false;
+    private final JProgressBar progressBar;
+    private final JButton stopper;
+    private final JLabel messageLabel;
+    private FileSynchronizer backingUp = null;
 
-    public MultiplePathsynchronizer(HashMap<File, ArrayList<Object>> synchronizedPaths, JProgressBar progressBar, JLabel messageLabel, JButton stopper) {
+    public MultiplePathsynchronizer(HashMap<File, ArrayList<Object>> synchronizedPaths, JProgressBar progressBar, HashMap<String, FileFilter> filters, JLabel messageLabel, JButton stopper) {
         this.synchronizedPaths = synchronizedPaths;
         this.progressBar = progressBar;
         this.messageLabel = messageLabel;
         this.stopper = stopper;
+        this.filters = filters;
     }
 
     @Override
@@ -45,9 +49,11 @@ public class MultiplePathsynchronizer extends Thread {
                 if ((boolean) origin.getValue().get(destination + 1)) {
                     File destinationFile = (File) origin.getValue().get(destination);
 
-                    boolean clasify = (boolean) origin.getValue().get(destination + 2);
+                    if (!(boolean) origin.getValue().get(destination + 2)) {
+                        filters = null;
+                    }
                     boolean deleteOriginal = (boolean) origin.getValue().get(destination + 2);
-                    backingUp = new FileSynchronizer(source, destinationFile, progressBar, messageLabel, clasify, deleteOriginal);
+                    backingUp = new FileSynchronizer(source, destinationFile, progressBar, messageLabel, filters, deleteOriginal);
                     backingUp.start();
                     try {
                         backingUp.join();
@@ -55,8 +61,10 @@ public class MultiplePathsynchronizer extends Thread {
                         Logger.getLogger(MultiplePathsynchronizer.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     if (stop) {
-                        messageLabel.setText("Finished synchronizing - Stopped by user.");
-                        progressBar.setValue(progressBar.getMaximum());
+                        SwingUtilities.invokeLater(() -> {
+                            messageLabel.setText("Finished synchronizing - Stopped by user.");
+                            progressBar.setValue(progressBar.getMaximum());
+                        });
                         break;
                     }
                 }
