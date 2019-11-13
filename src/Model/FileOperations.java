@@ -13,6 +13,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -228,7 +229,7 @@ public class FileOperations {
 
             for (int file = 0; file < allFiles.size(); file++) {
                 int comparingWith = file + 1;
-                while (comparingWith < allFiles.size() && allFiles.get(comparingWith).length() == allFiles.get(file).length()) {
+                while (comparingWith < allFiles.size() && Arrays.equals(Files.readAllBytes(allFiles.get(comparingWith).toPath()), Files.readAllBytes(allFiles.get(file).toPath()))) {
                     if (!duplicated.contains(allFiles.get(file))) {
                         duplicated.add(allFiles.get(file));
                     }

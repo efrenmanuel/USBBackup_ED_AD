@@ -56,6 +56,7 @@ public class SettingsFile {
 
     public static HashMap<File, ArrayList<Object>> getSyncedPaths() throws FileNotFoundException, IOException {
         HashMap<File, ArrayList<Object>> synchronizedPaths = new HashMap<>();
+        try{
         RandomAccessFile synchronizedPathsFile = new RandomAccessFile("./enabledPaths.cfg", "r");
         String pathPair;
         while ((pathPair = synchronizedPathsFile.readLine()) != null) {
@@ -70,8 +71,16 @@ public class SettingsFile {
                 }
                 synchronizedPaths.put(new File(paths[0]),backups );
             }
-        }
         synchronizedPathsFile.close();
+        }}catch(FileNotFoundException ex){
+        RandomAccessFile synchronizedPathsFile = new RandomAccessFile("./enabledPaths.cfg", "rw");
+        synchronizedPathsFile.close();
+            
+        }catch(IOException ex){
+        RandomAccessFile synchronizedPathsFile = new RandomAccessFile("./enabledPaths.cfg", "rw");
+        synchronizedPathsFile.close();
+            
+        }
         return synchronizedPaths;
 
     }
