@@ -7,11 +7,14 @@ package View;
 
 import Model.CustomExceptions;
 import Model.FileOperations;
-import Model.InitializeTable;
+import Model.Filters;
+import Model.ManageTable;
 import Model.MultiplePathsynchronizer;
 import Model.SettingsFile;
+import Model.Table_Map_Synchronizer;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -19,8 +22,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import mdlaf.*;
@@ -34,23 +40,33 @@ import mdlaf.animation.MaterialUIMovement;
  */
 public class MainScreen extends javax.swing.JFrame {
 
-    private String RootLocation;
     private HashMap<File, ArrayList<Object>> synchronizedPaths = new HashMap<>();
     private MultiplePathsynchronizer fileSynchronizer;
-    HashMap<String, FileFilter> filters;
+    private Table_Map_Synchronizer tbmSynchro;
+    private HashMap<String, FilenameFilter> filters;
 
     /**
      * Creates new form MainScreen
      */
     public MainScreen() throws IOException, CustomExceptions {
         initComponents();
-        String pathPair;
+        this.setTitle("YourBackup!");
         synchronizedPaths = SettingsFile.getSyncedPaths();
-        for (Map.Entry<File, ArrayList<Object>> entry : synchronizedPaths.entrySet()) {
-        }
 
-        InitializeTable.initialize(jTable1, synchronizedPaths);
+        ManageTable.initialize(jTable1, synchronizedPaths);
+
+        filters = new HashMap<>();
+        filters.put("Images", new Filters.FilterImage());
+        cbImages.setSelected(true);
+        filters.put("Videos", new Filters.FilterVideo());
+        cbVideos.setSelected(true);
+        filters.put("Documents", new Filters.FilterDocument());
+        cbDocuments.setSelected(true);
+        filters.put("Others", new Filters.FilterOthers());
+        cbOthers.setSelected(true);
         fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, filters, messageLabel, stopper);
+        tbmSynchro = new Table_Map_Synchronizer(jTable1, synchronizedPaths);
+
     }
 
     /**
@@ -71,6 +87,15 @@ public class MainScreen extends javax.swing.JFrame {
         startBackup = new javax.swing.JButton();
         stopper = new javax.swing.JButton();
         removeDir = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
+        jSeparator2 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        cbEverything = new javax.swing.JCheckBox();
+        cbImages = new javax.swing.JCheckBox();
+        cbVideos = new javax.swing.JCheckBox();
+        cbDocuments = new javax.swing.JCheckBox();
+        cbOthers = new javax.swing.JCheckBox();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(500, 475));
@@ -81,7 +106,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
-        messageLabel.setText("Insert Description of Current Task here");
+        messageLabel.setText("Welcome to YourBackup!");
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -92,7 +117,7 @@ public class MainScreen extends javax.swing.JFrame {
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class
+                java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
                 false, false, false, false, true, true, true
@@ -179,6 +204,100 @@ public class MainScreen extends javax.swing.JFrame {
             }
         });
 
+        jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel1.setText("Clasify");
+
+        cbEverything.setSelected(true);
+        cbEverything.setText("Everything");
+        cbEverything.setAlignmentX(0.5F);
+        cbEverything.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        cbEverything.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbEverythingActionPerformed(evt);
+            }
+        });
+
+        cbImages.setSelected(true);
+        cbImages.setText("Images");
+        cbImages.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbImagesActionPerformed(evt);
+            }
+        });
+
+        cbVideos.setSelected(true);
+        cbVideos.setText("Videos");
+        cbVideos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbVideosActionPerformed(evt);
+            }
+        });
+
+        cbDocuments.setSelected(true);
+        cbDocuments.setText("Documents");
+        cbDocuments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbDocumentsActionPerformed(evt);
+            }
+        });
+
+        cbOthers.setSelected(true);
+        cbOthers.setText("Others");
+        cbOthers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbOthersActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSeparator2)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cbEverything, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(cbImages)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cbVideos))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(cbDocuments)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cbOthers)))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addGap(2, 2, 2)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cbEverything)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cbImages)
+                    .addComponent(cbVideos))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cbDocuments)
+                    .addComponent(cbOthers))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jButton1.setText("Search Duplicates");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -191,15 +310,17 @@ public class MainScreen extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(progressBarMainScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 810, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 1029, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(newBackupButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(startBackup, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(removeDir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(removeDir, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(stopper))))
+                                .addComponent(stopper))
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(6, 6, 6)
                         .addComponent(jSeparator1)))
@@ -218,7 +339,11 @@ public class MainScreen extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(startBackup)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(stopper)))
+                        .addComponent(stopper)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -276,8 +401,12 @@ public class MainScreen extends javax.swing.JFrame {
             if (toAdd != null && toAdd.size() > 0) {
                 if (!synchronizedPaths.containsKey((File) toAdd.keySet().toArray()[0])) {
                     synchronizedPaths.putAll(toAdd);
-                    InitializeTable.update(jTable1, synchronizedPaths);
+                    ManageTable.update(jTable1, synchronizedPaths);
                     SettingsFile.addNewPaths((HashMap<File, ArrayList<Object>>) toAdd);
+                } else {
+                    synchronizedPaths.get((File) toAdd.keySet().toArray()[0]).addAll(toAdd.get(toAdd.keySet().toArray()[0]));
+                    ManageTable.update(jTable1, synchronizedPaths);
+                    SettingsFile.overwriteSettings(synchronizedPaths);
                 }
             }
 
@@ -307,11 +436,13 @@ public class MainScreen extends javax.swing.JFrame {
     }//GEN-LAST:event_startBackupMouseReleased
 
     private void startBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startBackupActionPerformed
+        tbmSynchro.updateMap();
         stopper.setEnabled(true);
-        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, filters,messageLabel, stopper);
+        fileSynchronizer = new MultiplePathsynchronizer(synchronizedPaths, progressBarMainScreen, filters, messageLabel, stopper);
         fileSynchronizer.start();
         try {
             SettingsFile.overwriteSettings(synchronizedPaths);
+            ManageTable.update(jTable1, synchronizedPaths);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
@@ -324,8 +455,22 @@ public class MainScreen extends javax.swing.JFrame {
     }//GEN-LAST:event_stopperActionPerformed
 
     private void removeDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeDirActionPerformed
+        File originPath = new File((String) jTable1.getValueAt(jTable1.getSelectedRow(), 0));
         if (jTable1.getSelectedRow() != -1) {
-            synchronizedPaths.remove(new File((String) jTable1.getValueAt(jTable1.getSelectedRow(), 0)));
+            if (synchronizedPaths.get(originPath).size() == 1) {
+                synchronizedPaths.remove(originPath);
+            } else {
+                for (int path = 0; path < synchronizedPaths.get(originPath).size(); path += 4) {
+                    if (((File) synchronizedPaths.get(originPath).get(path)).equals(new File((String) jTable1.getValueAt(jTable1.getSelectedRow(), 2)))) {
+                        synchronizedPaths.get(originPath).remove(path + 3);
+                        synchronizedPaths.get(originPath).remove(path + 2);
+                        synchronizedPaths.get(originPath).remove(path + 1);
+                        synchronizedPaths.get(originPath).remove(path);
+                        break;
+                    }
+                }
+
+            }
             ((DefaultTableModel) jTable1.getModel()).removeRow(jTable1.getSelectedRow());
             try {
                 SettingsFile.overwriteSettings(synchronizedPaths);
@@ -333,10 +478,107 @@ public class MainScreen extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Error when saving your settings", "ERROR", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            System.out.println(jTable1.getRowCount());
         }
 
     }//GEN-LAST:event_removeDirActionPerformed
+
+    private void cbEverythingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbEverythingActionPerformed
+        if (cbEverything.isSelected()) {
+            filters = new HashMap<>();
+            filters.put("Images", new Filters.FilterImage());
+            cbImages.setSelected(true);
+            filters.put("Videos", new Filters.FilterVideo());
+            cbVideos.setSelected(true);
+            filters.put("Documents", new Filters.FilterDocument());
+            cbDocuments.setSelected(true);
+            filters.put("Others", new Filters.FilterOthers());
+            cbOthers.setSelected(true);
+        } else {
+            cbDocuments.setSelected(false);
+            cbVideos.setSelected(false);
+            cbImages.setSelected(false);
+            cbOthers.setSelected(false);
+            filters = null;
+        }
+    }//GEN-LAST:event_cbEverythingActionPerformed
+
+    private void cbImagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbImagesActionPerformed
+        if (cbImages.isSelected()) {
+            if (filters == null) {
+                filters = new HashMap<>();
+            }
+            filters.put("Images", new Filters.FilterImage());
+            if (cbVideos.isSelected() && cbDocuments.isSelected() && cbOthers.isSelected()) {
+                cbEverything.setSelected(rootPaneCheckingEnabled);
+            }
+        } else {
+            cbEverything.setSelected(false);
+            filters.remove("Images");
+
+            if (filters.size() == 0) {
+                filters = null;
+            }
+        }
+    }//GEN-LAST:event_cbImagesActionPerformed
+
+    private void cbVideosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbVideosActionPerformed
+        if (cbVideos.isSelected()) {
+            if (filters == null) {
+                filters = new HashMap<>();
+            }
+            filters.put("Videos", new Filters.FilterVideo());
+            if (cbImages.isSelected() && cbDocuments.isSelected() && cbOthers.isSelected()) {
+                cbEverything.setSelected(rootPaneCheckingEnabled);
+            }
+        } else {
+            cbEverything.setSelected(false);
+            filters.remove("Videos");
+            if (filters.size() == 0) {
+                filters = null;
+            }
+        }
+    }//GEN-LAST:event_cbVideosActionPerformed
+
+    private void cbDocumentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDocumentsActionPerformed
+        if (cbDocuments.isSelected()) {
+            if (filters == null) {
+                filters = new HashMap<>();
+            }
+            filters.put("Videos", new Filters.FilterVideo());
+            if (cbImages.isSelected() && cbVideos.isSelected() && cbOthers.isSelected()) {
+                cbEverything.setSelected(rootPaneCheckingEnabled);
+            }
+        } else {
+            cbEverything.setSelected(false);
+            filters.remove("Documents");
+            if (filters.size() == 0) {
+                filters = null;
+            }
+        }
+    }//GEN-LAST:event_cbDocumentsActionPerformed
+
+    private void cbOthersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbOthersActionPerformed
+        if (cbOthers.isSelected()) {
+            if (filters == null) {
+                filters = new HashMap<>();
+            }
+            filters.put("Videos", new Filters.FilterVideo());
+            if (cbImages.isSelected() && cbDocuments.isSelected() && cbVideos.isSelected()) {
+                cbEverything.setSelected(rootPaneCheckingEnabled);
+            }
+        } else {
+            cbEverything.setSelected(false);
+            filters.remove("Others");
+            if (filters.size() == 0) {
+                filters = null;
+            }
+        }
+    }//GEN-LAST:event_cbOthersActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        JDialog duplicatesScreen= new DuplicatesScreen(this,true);
+        duplicatesScreen.setVisible(true);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     private void updateBottomBar(String text, int min, int max, int val) {
         progressBarMainScreen.setMinimum(min);
@@ -379,6 +621,7 @@ public class MainScreen extends javax.swing.JFrame {
                     new MainScreen().setVisible(true);
                 } catch (IOException | CustomExceptions ex) {
                     Logger.getLogger(MainScreen.class.getName()).log(Level.SEVERE, null, ex);
+
                 }
             }
         });
@@ -387,8 +630,17 @@ public class MainScreen extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox cbDocuments;
+    private javax.swing.JCheckBox cbEverything;
+    private javax.swing.JCheckBox cbImages;
+    private javax.swing.JCheckBox cbOthers;
+    private javax.swing.JCheckBox cbVideos;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel messageLabel;
     private javax.swing.JButton newBackupButton;

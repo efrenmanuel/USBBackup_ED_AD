@@ -15,7 +15,7 @@ import java.util.Date;
  */
 public class Filters {
 
-    public static class FilterDirectory implements FilenameFilter {
+    public static class FilterDirectory implements FilenameFilter{
 
         @Override
         public boolean accept(File dir, String name) {
@@ -47,7 +47,7 @@ public class Filters {
 
         @Override
         public boolean accept(File file, String name) {
-            return name.endsWith(".doc") || name.endsWith(".txt") || name.endsWith(".docx") || name.endsWith(".pdf");
+            return name.endsWith(".doc") || name.endsWith(".txt") || name.endsWith(".docx") || name.endsWith(".pdf")||file.isDirectory();
         }
 
     }
@@ -57,7 +57,7 @@ public class Filters {
         @Override
         public boolean accept(File dir, String name) {
 
-            return name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".tiff");
+            return name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".tiff") || name.endsWith(".png")||dir.isDirectory();
         }
     }
 
@@ -65,7 +65,7 @@ public class Filters {
 
         @Override
         public boolean accept(File dir, String name) {
-            return name.endsWith(".avi") || name.endsWith(".mp4") || name.endsWith(".mkv");
+            return name.endsWith(".avi") || name.endsWith(".mp4") || name.endsWith(".mkv")||dir.isDirectory();
 
         }
 
@@ -75,7 +75,7 @@ public class Filters {
 
         @Override
         public boolean accept(File file, String name) {
-            return !(new FilterDirectory().accept(file, name) || new FilterVideo().accept(file, name) || new FilterImage().accept(file, name));
+            return !(new FilterDocument().accept(file, name) || new FilterVideo().accept(file, name) || new FilterImage().accept(file, name))||file.isDirectory();
         }
 
     }

@@ -7,6 +7,7 @@ package Model;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ public class FileSynchronizer extends Thread {
     private final JProgressBar progressBar;
     private final JLabel messageLabel;
     private boolean deleteOriginal;
-    private HashMap<String, FileFilter> filters;
+    private HashMap<String, FilenameFilter> filters;
 
     public FileSynchronizer(File localSource, File backupRoute, JProgressBar progressBar, JLabel messageLabel) {
         this.localSource = localSource;
@@ -36,9 +37,10 @@ public class FileSynchronizer extends Thread {
         this.progressBar = progressBar;
         this.messageLabel = messageLabel;
         this.deleteOriginal = false;
+
     }
 
-    public FileSynchronizer(File localSource, File backupRoute, JProgressBar progressBar, JLabel messageLabel, HashMap<String, FileFilter> filters) {
+    public FileSynchronizer(File localSource, File backupRoute, JProgressBar progressBar, JLabel messageLabel, HashMap<String, FilenameFilter> filters) {
         this.localSource = localSource;
         this.backupRoute = backupRoute;
         this.progressBar = progressBar;
@@ -56,7 +58,7 @@ public class FileSynchronizer extends Thread {
         this.deleteOriginal = deleteOriginal;
     }
 
-    public FileSynchronizer(File localSource, File backupRoute, JProgressBar progressBar, JLabel messageLabel, HashMap<String, FileFilter> filters, boolean deleteOriginal) {
+    public FileSynchronizer(File localSource, File backupRoute, JProgressBar progressBar, JLabel messageLabel, HashMap<String, FilenameFilter> filters, boolean deleteOriginal) {
         this.localSource = localSource;
         this.backupRoute = backupRoute;
         this.progressBar = progressBar;
@@ -69,9 +71,13 @@ public class FileSynchronizer extends Thread {
         copy(null, null);
     }
 
-    public void copy(FileFilter filter, String folder) throws CustomExceptions, IOException {
-        ArrayList<File> allFiles = FileOperations.recursiveListFiles(localSource, filter);
-
+    public void copy(FilenameFilter filter, String folder) throws CustomExceptions, IOException {
+        ArrayList<File> allFiles;
+        if (filter != null) {
+            allFiles = FileOperations.recursiveListFiles(localSource, false, filter);
+        } else {
+            allFiles = FileOperations.recursiveListFiles(localSource, filter);
+        }
         float totalFileSize = 0;
         float currentFileSize = 0;
 
@@ -80,11 +86,13 @@ public class FileSynchronizer extends Thread {
         }
         final float total = totalFileSize;
 
-        SwingUtilities.invokeLater(() -> {
+        SwingUtilities.invokeLater(
+                () -> {
 
-            progressBar.setMaximum((int) total);
-            progressBar.setMinimum(0);
-        });
+                    progressBar.setMaximum((int) total);
+                    progressBar.setMinimum(0);
+                }
+        );
 
         for (File file : allFiles) {
 
@@ -103,7 +111,7 @@ public class FileSynchronizer extends Thread {
                 output = new File(backupRoute.getCanonicalPath() + file.getCanonicalPath().replace(localSource.getCanonicalPath(), ""));
             }
 
-            FileOperations.copyFileIfNewer(file, output);
+            FileOperations.copyFileIfNewer(file, output, deleteOriginal);
 
             if (stop) {
                 break;
@@ -113,17 +121,40 @@ public class FileSynchronizer extends Thread {
                 progressBar.setValue(progressBar.getValue() + (int) file.length());
             });
         }
-        SwingUtilities.invokeLater(() -> {
-            messageLabel.setText("Finished synchronizing - " + localSource);
-        });
+        if (deleteOriginal) {
+            for (File carpeta : localSource.listFiles()) {
+                deleteDirectory(carpeta);
+            }
+        }
 
+        SwingUtilities.invokeLater(
+                () -> {
+                    messageLabel.setText("Finished synchronizing - " + localSource);
+                }
+        );
+
+    }
+
+    public static void deleteDirectory(File directory) throws IOException {
+        System.out.println(directory.listFiles());
+        System.out.println(directory.getCanonicalPath());
+        if (directory.listFiles() != null) {
+            for (File directoryInside : directory.listFiles()) {
+                deleteDirectory(directoryInside);
+            }
+        }
+        directory.delete();
     }
 
     @Override
     public void run() {
         try {
-            for (String folder : filters.keySet()) {
-                copy(filters.get(folder), folder);
+            if (filters != null) {
+                for (String folder : filters.keySet()) {
+                    copy(filters.get(folder), folder);
+                }
+            } else {
+                copy();
             }
         } catch (IOException ex) {
             Logger.getLogger(MultiplePathsynchronizer.class

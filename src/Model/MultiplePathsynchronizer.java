@@ -7,6 +7,7 @@ package Model;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,14 +26,14 @@ import javax.swing.SwingUtilities;
 public class MultiplePathsynchronizer extends Thread {
 
     private final HashMap<File, ArrayList<Object>> synchronizedPaths;
-    private HashMap<String, FileFilter> filters;
+    private HashMap<String, FilenameFilter> filters;
     private boolean stop = false;
     private final JProgressBar progressBar;
     private final JButton stopper;
     private final JLabel messageLabel;
     private FileSynchronizer backingUp = null;
 
-    public MultiplePathsynchronizer(HashMap<File, ArrayList<Object>> synchronizedPaths, JProgressBar progressBar, HashMap<String, FileFilter> filters, JLabel messageLabel, JButton stopper) {
+    public MultiplePathsynchronizer(HashMap<File, ArrayList<Object>> synchronizedPaths, JProgressBar progressBar, HashMap<String, FilenameFilter> filters, JLabel messageLabel, JButton stopper) {
         this.synchronizedPaths = synchronizedPaths;
         this.progressBar = progressBar;
         this.messageLabel = messageLabel;
@@ -45,15 +46,19 @@ public class MultiplePathsynchronizer extends Thread {
 
         for (Map.Entry<File, ArrayList<Object>> origin : synchronizedPaths.entrySet()) {
             File source = origin.getKey();
-            for (int destination = 0; destination < origin.getValue().size(); destination += 3) {
+            for (int destination = 0; destination < origin.getValue().size(); destination += 4) {
                 if ((boolean) origin.getValue().get(destination + 1)) {
                     File destinationFile = (File) origin.getValue().get(destination);
 
-                    if (!(boolean) origin.getValue().get(destination + 2)) {
-                        filters = null;
+                    boolean deleteOriginal = (boolean) origin.getValue().get(destination + 3);
+                    boolean clasify = (boolean) origin.getValue().get(destination + 2);
+                    
+                    if (clasify) {
+                        backingUp = new FileSynchronizer(source, destinationFile, progressBar, messageLabel, filters, deleteOriginal);
+                    } else {
+                        backingUp = new FileSynchronizer(source, destinationFile, progressBar, messageLabel, deleteOriginal);
+
                     }
-                    boolean deleteOriginal = (boolean) origin.getValue().get(destination + 2);
-                    backingUp = new FileSynchronizer(source, destinationFile, progressBar, messageLabel, filters, deleteOriginal);
                     backingUp.start();
                     try {
                         backingUp.join();

@@ -7,6 +7,7 @@ package Model;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -68,7 +69,7 @@ public class FileOperations {
      * @throws CustomExceptions
      * @throws IOException
      */
-    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders, FileFilter filter) throws CustomExceptions, IOException {
+    public static ArrayList<File> recursiveListFiles(File searchRoot, boolean includeFolders, FilenameFilter filter) throws CustomExceptions, IOException {
         ArrayList<File> results = new ArrayList<>();
 
         if (!searchRoot.isDirectory()) {
@@ -103,20 +104,24 @@ public class FileOperations {
         return recursiveListFiles(searchRoot, includeFolders, null);
     }
 
-    public static ArrayList<File> recursiveListFiles(File searchRoot, FileFilter filter) throws CustomExceptions, IOException {
+    public static ArrayList<File> recursiveListFiles(File searchRoot, FilenameFilter filter) throws CustomExceptions, IOException {
         return recursiveListFiles(searchRoot, true, filter);
     }
 
-    public static boolean copyFileIfNewer(File input, String output) throws IOException {
-        return copyFileIfNewer(input, new File(output));
+    public static boolean copyFileIfNewer(File input, String output, boolean deleteSource) throws IOException {
+        return copyFileIfNewer(input, new File(output), deleteSource);
     }
 
-    public static boolean copyFileIfNewer(String input, String output) throws IOException {
-        return copyFileIfNewer(new File(input), new File(output));
+    public static boolean copyFileIfNewer(String input, String output, boolean deleteSource) throws IOException {
+        return copyFileIfNewer(new File(input), new File(output), deleteSource);
     }
 
-    public static boolean copyFileIfNewer(File input, File output) throws IOException {
-        return copyFile(input, output, input.lastModified() > output.lastModified());
+    public static boolean copyFileIfNewer(File input, File output, boolean deleteSource) throws IOException {
+        if (input.lastModified() > output.lastModified()) {
+            return copyFile(input, output, true, deleteSource);
+        } else {
+            return false;
+        }
     }
 
     public static boolean copyFile(File input, String output) throws IOException {
@@ -128,10 +133,10 @@ public class FileOperations {
     }
 
     public static boolean copyFile(File input, File output) throws IOException {
-        return copyFile(input, output, false);
+        return copyFile(input, output, false, false);
     }
 
-    public static boolean copyFile(File input, File output, boolean force) throws IOException {
+    public static boolean copyFile(File input, File output, boolean force, boolean deleteSource) throws IOException {
         boolean result;
         if (!input.isDirectory()) {
             if (!output.exists()) {
@@ -140,6 +145,9 @@ public class FileOperations {
             try {
                 if (force) {
                     Files.copy(input.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+                    if (deleteSource) {
+
+                    }
                 } else {
                     Files.copy(input.toPath(), output.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
                 }
@@ -148,7 +156,9 @@ public class FileOperations {
                 result = false;
             }
         } else {
-            Files.createDirectories(output.toPath());
+            if (!output.getParentFile().exists()) {
+                Files.createDirectories(output.toPath());
+            }
             result = true;
 
         }
@@ -156,6 +166,8 @@ public class FileOperations {
         return result;
 
     }
+
+    
 
     /**
      * Returns an array of files in the directory

@@ -5,7 +5,7 @@
  */
 package View;
 
-import Model.InitializeTable;
+import Model.ManageTable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
